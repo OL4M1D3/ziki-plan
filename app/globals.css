@@ -1,26 +1,69 @@
 @import "tailwindcss";
 
-/* ─── Ziki design tokens ──────────────────────────────────────────────────── */
-/* Extracted from screenshots: ziki.dev dark theme */
+/* ─── Ziki real navy design tokens ─────────────────────────────────────────── */
+/* Sampled from live Ziki (ziki.dev/settings/agents/connect) and issue-tracker */
 
 :root {
-  --ziki-bg: #0d1117;
-  --ziki-surface: #161b22;
-  --ziki-border: #21262d;
-  --ziki-text: #e6edf3;
-  --ziki-muted: #7d8590;
-  --ziki-blue: #2f81f7;
+  --ziki-bg: #060c1c;
+  --ziki-header-bg: #060d1f;
+  --ziki-surface: #0b152d;
+  --ziki-surface-hover: #111f42;
+  --ziki-border: #1e2d52;
+  --ziki-border-subtle: #142240;
+  --ziki-text: #f0f4fc;
+  --ziki-text-secondary: #c5d1e6;
+  --ziki-muted: #798ba8;
+
+  --ziki-blue: #2f6bf0;
+  --ziki-blue-hover: #2558cc;
+  --ziki-blue-tint: #0d1e40;
+  --ziki-blue-tint-border: #1d3b75;
+
+  --ziki-gold-bg: #271a07;
+  --ziki-gold-border: #5c3d0b;
+  --ziki-gold-text: #f59e0b;
+
+  --ziki-avatar-bg: #0f9d8a;
+
+  --ziki-orange-bg: #2b1706;
+  --ziki-orange-border: #5e2d09;
+  --ziki-orange-text: #f97316;
+
+  --ziki-danger-bg: #281114;
+  --ziki-danger-border: #542025;
+  --ziki-danger-text: #f87171;
 }
 
 @theme inline {
   --color-ziki-bg: var(--ziki-bg);
+  --color-ziki-header-bg: var(--ziki-header-bg);
   --color-ziki-surface: var(--ziki-surface);
+  --color-ziki-surface-hover: var(--ziki-surface-hover);
   --color-ziki-border: var(--ziki-border);
+  --color-ziki-border-subtle: var(--ziki-border-subtle);
   --color-ziki-text: var(--ziki-text);
+  --color-ziki-text-secondary: var(--ziki-text-secondary);
   --color-ziki-muted: var(--ziki-muted);
-  --color-ziki-blue: var(--ziki-blue);
 
-  /* keep scaffold defaults for font */
+  --color-ziki-blue: var(--ziki-blue);
+  --color-ziki-blue-hover: var(--ziki-blue-hover);
+  --color-ziki-blue-tint: var(--ziki-blue-tint);
+  --color-ziki-blue-tint-border: var(--ziki-blue-tint-border);
+
+  --color-ziki-gold-bg: var(--ziki-gold-bg);
+  --color-ziki-gold-border: var(--ziki-gold-border);
+  --color-ziki-gold-text: var(--ziki-gold-text);
+
+  --color-ziki-avatar-bg: var(--ziki-avatar-bg);
+
+  --color-ziki-orange-bg: var(--ziki-orange-bg);
+  --color-ziki-orange-border: var(--ziki-orange-border);
+  --color-ziki-orange-text: var(--ziki-orange-text);
+
+  --color-ziki-danger-bg: var(--ziki-danger-bg);
+  --color-ziki-danger-border: var(--ziki-danger-border);
+  --color-ziki-danger-text: var(--ziki-danger-text);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -36,6 +79,7 @@ body {
   background: var(--ziki-bg);
   color: var(--ziki-text);
   font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+  overflow-x: hidden;
 }
 
 /* Visible focus ring that works everywhere */
@@ -44,7 +88,7 @@ body {
   outline-offset: 2px;
 }
 
-/* Scrollbar thinning (optional, cosmetic) */
+/* Scrollbar thinning */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--ziki-border) transparent;
