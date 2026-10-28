@@ -1,68 +1,141 @@
 import Image from "next/image";
+import PlanReview from "@/components/PlanReview";
+import {
+  AGENT_NAME,
+  ISSUE_NUMBER,
+  ISSUE_TITLE,
+  ESTIMATE_LINE,
+  READING,
+  BOUNDARY,
+} from "@/data/plan";
 
-export default function Home() {
+// ─── Header ──────────────────────────────────────────────────────────────────
+
+function Header() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <header className="w-full border-b border-ziki-border bg-ziki-surface">
+      <div className="max-w-5xl mx-auto px-4 h-12 flex items-center gap-4 overflow-x-auto">
+        {/* Logo */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <Image
+            src="/ziki-mark.svg"
+            alt="Ziki logo mark"
+            width={20}
+            height={20}
+            className="w-5 h-5"
+          />
+          <span className="text-ziki-text font-bold text-sm tracking-tight">ziki</span>
+        </div>
+
+        {/* Workspace */}
+        <span className="text-ziki-text text-sm font-medium flex-shrink-0">Zedu</span>
+
+        {/* Nav links */}
+        <nav aria-label="Main navigation" className="flex items-center gap-4 ml-2">
+          {["Product", "Marketing", "Security", "Agents"].map((label) => (
+            <span
+              key={label}
+              className="text-ziki-muted text-xs hover:text-ziki-text flex-shrink-0 cursor-default"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              {label}
+            </span>
+          ))}
+        </nav>
+
+        {/* Right side */}
+        <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+          {/* Points badge */}
+          <div className="flex items-center gap-1 rounded-full bg-amber-900/40 border border-amber-800/60 px-2.5 py-0.5">
+            <span className="text-amber-400 text-[10px] font-semibold whitespace-nowrap">
+              4382 pts of 500, 0 solved, 100%
+            </span>
+          </div>
+          {/* Avatar / name */}
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-[10px] font-bold text-white select-none">
+              M
+            </div>
+            <span className="text-ziki-text text-xs font-medium">Muhammed</span>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function Page() {
+  return (
+    <div className="min-h-screen bg-ziki-bg text-ziki-text flex flex-col">
+      <Header />
+
+      <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* 2. The ask */}
+        <section aria-label="Plan request" className="space-y-2">
+          <p className="text-ziki-muted text-sm">
+            <strong className="text-ziki-text">{AGENT_NAME}</strong> wants to take{" "}
+            <strong className="text-ziki-text">{ISSUE_NUMBER}</strong>
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <div className="flex items-start gap-3 flex-wrap">
+            <h1 className="text-xl font-bold text-ziki-text leading-snug">
+              {ISSUE_TITLE}
+            </h1>
+            <span className="flex-shrink-0 mt-0.5 inline-flex items-center rounded-full bg-orange-900/50 border border-orange-700/60 px-2.5 py-0.5 text-[11px] font-semibold text-orange-300 uppercase tracking-wide">
+              High
+            </span>
+          </div>
+          <p className="text-ziki-muted text-sm">{ESTIMATE_LINE}</p>
+        </section>
+
+        {/* 3. How Atlas read this task */}
+        <section
+          aria-labelledby="reading-heading"
+          className="rounded-xl border border-ziki-border bg-ziki-surface p-5 space-y-3"
+        >
+          <h2
+            id="reading-heading"
+            className="text-[10px] font-semibold uppercase tracking-widest text-ziki-muted"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            How {AGENT_NAME} Read This Task
+          </h2>
+          <dl className="space-y-2 text-sm">
+            <div className="flex flex-col sm:flex-row sm:gap-3">
+              <dt className="text-ziki-muted flex-shrink-0 w-32 font-medium">My reading</dt>
+              <dd className="text-ziki-text">{READING.myReading}</dd>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:gap-3">
+              <dt className="text-ziki-muted flex-shrink-0 w-32 font-medium">Assumptions</dt>
+              <dd className="text-ziki-text">{READING.assumptions}</dd>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:gap-3">
+              <dt className="text-ziki-muted flex-shrink-0 w-32 font-medium">Not sure</dt>
+              <dd className="text-ziki-text">{READING.notSure}</dd>
+            </div>
+          </dl>
+        </section>
+
+        {/* 4. The Plan — client component */}
+        <PlanReview />
+
+        {/* 5. Boundary strip */}
+        <section
+          aria-label="Responsibility boundary"
+          className="rounded-xl border border-ziki-border bg-ziki-surface p-5 grid grid-cols-1 sm:grid-cols-2 gap-4"
+        >
+          <div className="space-y-1">
+            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-ziki-muted">
+              {AGENT_NAME} Does on Its Own
+            </h3>
+            <p className="text-sm text-ziki-text">{BOUNDARY.agentDoes}</p>
+          </div>
+          <div className="space-y-1 sm:border-l sm:border-ziki-border sm:pl-4">
+            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-ziki-muted">
+              Needs You
+            </h3>
+            <p className="text-sm text-ziki-text">{BOUNDARY.needsYou}</p>
+          </div>
+        </section>
       </main>
     </div>
   );

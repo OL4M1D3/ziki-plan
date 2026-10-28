@@ -1,26 +1,51 @@
 @import "tailwindcss";
 
+/* ─── Ziki design tokens ──────────────────────────────────────────────────── */
+/* Extracted from screenshots: ziki.dev dark theme */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ziki-bg: #0d1117;
+  --ziki-surface: #161b22;
+  --ziki-border: #21262d;
+  --ziki-text: #e6edf3;
+  --ziki-muted: #7d8590;
+  --ziki-blue: #2f81f7;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-ziki-bg: var(--ziki-bg);
+  --color-ziki-surface: var(--ziki-surface);
+  --color-ziki-border: var(--ziki-border);
+  --color-ziki-text: var(--ziki-text);
+  --color-ziki-muted: var(--ziki-muted);
+  --color-ziki-blue: var(--ziki-blue);
+
+  /* keep scaffold defaults for font */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+
+html {
+  background: var(--ziki-bg);
+  color: var(--ziki-text);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ziki-bg);
+  color: var(--ziki-text);
+  font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+}
+
+/* Visible focus ring that works everywhere */
+:focus-visible {
+  outline: 2px solid var(--ziki-blue);
+  outline-offset: 2px;
+}
+
+/* Scrollbar thinning (optional, cosmetic) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ziki-border) transparent;
 }
