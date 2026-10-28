@@ -9,13 +9,14 @@ A single-page UI mockup (Next.js 16, App Router) that shows the **Plan Review** 
 - "How Atlas Read This Task" block with reading, assumptions, and uncertainties
 - Editable plan list: add, edit, delete steps with source tagging ("edited by you" / "added by you")
 - Boundary strip showing what the agent does alone vs. what needs the human
-- Approve / Send back decision buttons; Approve is disabled with a hint when no steps remain
+- Approve / Send back decision flow: approving displays a confirmation card with change summary, while sending back requests feedback and presents the revised plan with updated task reading
 
 ## Assumptions
 
 - Insert "before first step" is modelled as `afterIndex = -1` (splice at position 0)
-- Only one editor (edit or insert) is open at a time; opening a second silently discards the first's unsaved draft
+- Only one editor (step edit, insert, or send back comment box) is open at a time; opening one silently closes any other without saving
 - Saving an edit with unchanged text is a no-op (source stays the same)
-- Decision buttons are rendered but have no handlers — wired in a later stage
+- Sending back transitions directly to "revised" status without timers or dates
+- Approving calculates removed count against the current plan's baseline snapshot (`originalStepIds`, reset on revision)
 - No drag-and-drop, no animations beyond Tailwind hover/focus transitions
 - No external dependencies added beyond the scaffold

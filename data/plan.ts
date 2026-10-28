@@ -52,3 +52,44 @@ export const BOUNDARY = {
   needsYou:
     "Approving the plan, any scope change, opening a PR, merging",
 };
+
+export const revisedReading = {
+  reading: '"Fix" = onboarding copy only. No layout or flow changes.',
+  assumptions:
+    "The current onboarding screens have copy that can be reviewed without design work.",
+  unsure:
+    "Whether the three weakest messages are the right ones to change first.",
+};
+
+export const revisedSteps: Step[] = [
+  {
+    id: "r1",
+    text: "Measure where learners leave (sign-up to first-lesson funnel)",
+    source: "agent",
+  },
+  {
+    id: "r2",
+    text: "Review the onboarding copy only and list the weakest messages",
+    source: "agent",
+  },
+  {
+    id: "r3",
+    text: "Draft rewrites for the top three",
+    source: "agent",
+  },
+  {
+    id: "r4",
+    text: "You approve the new copy (decision point)",
+    source: "agent",
+  },
+  {
+    id: "r5",
+    text: "Ship the new copy behind a flag",
+    source: "agent",
+  },
+  {
+    id: "r6",
+    text: "Compare before and after, then report back",
+    source: "agent",
+  },
+];

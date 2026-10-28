@@ -1,8 +1,35 @@
 "use client";
 
-import { useReducer, Fragment } from "react";
+import { useReducer, useState, useEffect, Fragment } from "react";
 import type { PlanState, PlanAction, Step } from "@/lib/types";
-import { INITIAL_STEPS } from "@/data/plan";
+import {
+  INITIAL_STEPS,
+  READING,
+  revisedReading,
+  revisedSteps,
+} from "@/data/plan";
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function computeApprovalSummary(
+  steps: Step[],
+  originalStepIds: string[]
+): string {
+  const n = steps.length;
+  const editedCount = steps.filter((s) => s.source === "edited").length;
+  const addedCount = steps.filter((s) => s.source === "added").length;
+  const originalPresentCount = steps.filter((s) =>
+    originalStepIds.includes(s.id)
+  ).length;
+  const removedCount = Math.max(0, originalStepIds.length - originalPresentCount);
+
+  const parts: string[] = [`${n} steps in the plan`];
+  if (editedCount > 0) parts.push(`${editedCount} edited by you`);
+  if (addedCount > 0) parts.push(`${addedCount} added by you`);
+  if (removedCount > 0) parts.push(`${removedCount} removed`);
+
+  return parts.join(" · ");
+}
 
 // ─── Reducer ────────────────────────────────────────────────────────────────
 
@@ -13,12 +40,14 @@ function planReducer(state: PlanState, action: PlanAction): PlanState {
       if (!step) return state;
       return {
         ...state,
+        isSendBackOpen: false,
         activeEditor: { kind: "edit", stepId: action.stepId, draft: step.text },
       };
     }
     case "OPEN_INSERT": {
       return {
         ...state,
+        isSendBackOpen: false,
         activeEditor: { kind: "insert", afterIndex: action.afterIndex, draft: "" },
       };
     }
@@ -72,6 +101,43 @@ function planReducer(state: PlanState, action: PlanAction): PlanState {
             : state.activeEditor,
       };
     }
+    case "APPROVE": {
+      if (state.steps.length === 0) return state;
+      return {
+        ...state,
+        status: "approved",
+        isSendBackOpen: false,
+        activeEditor: null,
+      };
+    }
+    case "OPEN_SEND_BACK": {
+      return {
+        ...state,
+        isSendBackOpen: true,
+        activeEditor: null,
+      };
+    }
+    case "CANCEL_SEND_BACK": {
+      return {
+        ...state,
+        isSendBackOpen: false,
+      };
+    }
+    case "SEND_BACK": {
+      const comment = action.comment.trim();
+      if (!comment) return state;
+      const steps = revisedSteps.map((s) => ({ ...s }));
+      return {
+        ...state,
+        status: "revised",
+        steps,
+        originalStepIds: steps.map((s) => s.id),
+        sendBackComment: comment,
+        isSendBackOpen: false,
+        activeEditor: null,
+        nextId: 200,
+      };
+    }
     default:
       return state;
   }
@@ -81,6 +147,10 @@ const INITIAL_STATE: PlanState = {
   steps: INITIAL_STEPS,
   nextId: 100,
   activeEditor: null,
+  status: "reviewing",
+  originalStepIds: INITIAL_STEPS.map((s) => s.id),
+  sendBackComment: null,
+  isSendBackOpen: false,
 };
 
 // ─── InsertControl ───────────────────────────────────────────────────────────
@@ -173,7 +243,6 @@ function StepItem({
   return (
     <li className="group relative">
       <div className="flex gap-3 rounded-lg border border-transparent hover:border-ziki-border p-2 motion-safe:transition-colors">
-        {/* Step number */}
         <span
           aria-hidden="true"
           className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-ziki-surface border border-ziki-border text-xs text-ziki-muted flex items-center justify-center font-mono select-none"
@@ -181,7 +250,6 @@ function StepItem({
           {num}
         </span>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           {isEditing ? (
             <EditForm
@@ -206,7 +274,6 @@ function StepItem({
           )}
         </div>
 
-        {/* Action buttons — only when not editing */}
         {!isEditing && (
           <div className="flex-shrink-0 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 motion-safe:transition-opacity">
             <button
@@ -273,30 +340,186 @@ function EditForm({
   );
 }
 
+// ─── SendBackBox ─────────────────────────────────────────────────────────────
+
+function SendBackBox({
+  dispatch,
+}: {
+  dispatch: React.Dispatch<PlanAction>;
+}) {
+  const [comment, setComment] = useState("");
+  const canSend = comment.trim().length > 0;
+
+  return (
+    <div className="rounded-xl border border-ziki-border bg-ziki-surface p-4 space-y-3">
+      <label
+        htmlFor="send-back-comment"
+        className="block text-xs font-semibold text-ziki-muted uppercase tracking-wider"
+      >
+        What should Atlas change?
+      </label>
+      <textarea
+        id="send-back-comment"
+        autoFocus
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") dispatch({ type: "CANCEL_SEND_BACK" });
+        }}
+        placeholder="For example: copy changes only, no redesign"
+        className="w-full resize-none rounded-lg border border-ziki-border bg-ziki-bg text-ziki-text text-sm p-3 min-h-[80px] focus:outline-none focus:ring-2 focus:ring-ziki-blue"
+        aria-label="What should Atlas change?"
+      />
+      <div className="flex gap-2">
+        <button
+          disabled={!canSend}
+          onClick={() => dispatch({ type: "SEND_BACK", comment })}
+          className="px-4 py-2 text-xs rounded-lg bg-ziki-blue text-white font-medium disabled:opacity-40 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-ziki-blue motion-safe:transition-colors"
+          aria-label="Send comment to Atlas"
+        >
+          Send
+        </button>
+        <button
+          onClick={() => dispatch({ type: "CANCEL_SEND_BACK" })}
+          className="px-4 py-2 text-xs rounded-lg border border-ziki-border text-ziki-muted hover:text-ziki-text hover:border-ziki-text focus:outline-none focus:ring-2 focus:ring-ziki-blue motion-safe:transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── ConfirmationCard ────────────────────────────────────────────────────────
+
+function ConfirmationCard({
+  steps,
+  originalStepIds,
+}: {
+  steps: Step[];
+  originalStepIds: string[];
+}) {
+  const summary = computeApprovalSummary(steps, originalStepIds);
+
+  return (
+    <section
+      role="status"
+      aria-label="Approved plan confirmation"
+      className="rounded-xl border border-ziki-border bg-ziki-surface p-5 space-y-4"
+    >
+      <div className="space-y-1">
+        <h2 className="text-lg font-bold text-ziki-text">
+          Bid sent with your edits
+        </h2>
+        <p className="text-sm text-ziki-muted">
+          Atlas will start on #118 and report progress.
+        </p>
+        <p className="text-xs text-ziki-blue font-medium pt-1">
+          {summary}
+        </p>
+      </div>
+
+      <ol aria-label="Approved plan steps" className="space-y-2 pt-2 border-t border-ziki-border">
+        {steps.map((step, idx) => (
+          <li
+            key={step.id}
+            className="flex gap-3 rounded-lg border border-ziki-border/50 bg-ziki-bg/40 p-2"
+          >
+            <span
+              aria-hidden="true"
+              className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-ziki-surface border border-ziki-border text-xs text-ziki-muted flex items-center justify-center font-mono select-none"
+            >
+              {idx + 1}
+            </span>
+            <div className="flex flex-col gap-1 min-w-0">
+              <span className="text-sm text-ziki-text leading-snug">{step.text}</span>
+              {step.source === "edited" && (
+                <span className="text-[10px] text-ziki-muted font-medium uppercase tracking-wide">
+                  edited by you
+                </span>
+              )}
+              {step.source === "added" && (
+                <span className="text-[10px] text-ziki-blue font-medium uppercase tracking-wide">
+                  added by you
+                </span>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 // ─── PlanReview (main export) ────────────────────────────────────────────────
 
 export default function PlanReview() {
   const [state, dispatch] = useReducer(planReducer, INITIAL_STATE);
-  const { steps, activeEditor } = state;
+  const { steps, activeEditor, status, originalStepIds, sendBackComment, isSendBackOpen } = state;
   const isEmpty = steps.length === 0;
+
+  // Sync "How Atlas read this task" block when revised
+  useEffect(() => {
+    const section = document.querySelector(
+      'section[aria-labelledby="reading-heading"]'
+    );
+    if (!section) return;
+    const dds = section.querySelectorAll("dd");
+    if (dds.length >= 3) {
+      if (status === "revised") {
+        dds[0].textContent = revisedReading.reading;
+        dds[1].textContent = revisedReading.assumptions;
+        dds[2].textContent = revisedReading.unsure;
+      } else {
+        dds[0].textContent = READING.myReading;
+        dds[1].textContent = READING.assumptions;
+        dds[2].textContent = READING.notSure;
+      }
+    }
+  }, [status]);
+
+  if (status === "approved") {
+    return (
+      <ConfirmationCard
+        steps={steps}
+        originalStepIds={originalStepIds}
+      />
+    );
+  }
 
   return (
     <div className="w-full space-y-6">
+      {/* Revised banner notice */}
+      {status === "revised" && sendBackComment && (
+        <div
+          role="status"
+          className="text-xs text-ziki-muted rounded-lg bg-ziki-surface border border-ziki-border px-3 py-2 flex items-center gap-1.5"
+        >
+          <span>You sent this back: &ldquo;{sendBackComment}&rdquo;</span>
+        </div>
+      )}
+
       {/* THE PLAN block */}
       <section aria-labelledby="plan-heading" className="rounded-xl border border-ziki-border bg-ziki-surface p-5">
-        <h2
-          id="plan-heading"
-          className="text-[10px] font-semibold uppercase tracking-widest text-ziki-muted mb-4"
-        >
-          The Plan
-        </h2>
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <h2
+            id="plan-heading"
+            className="text-[10px] font-semibold uppercase tracking-widest text-ziki-muted"
+          >
+            The Plan
+          </h2>
+          {status === "revised" && (
+            <span className="text-[10px] font-medium text-ziki-blue bg-blue-950/50 border border-blue-800/60 rounded-full px-2 py-0.5">
+              Revised after your comment
+            </span>
+          )}
+        </div>
 
         {isEmpty ? (
           <div className="space-y-3">
             <p className="text-sm text-ziki-muted italic">
               A plan needs at least one step.
             </p>
-            {/* Insert control still works on empty state */}
             <ol aria-label="Plan steps">
               <InsertControl
                 afterIndex={-1}
@@ -308,7 +531,6 @@ export default function PlanReview() {
           </div>
         ) : (
           <ol aria-label="Plan steps" className="space-y-0">
-            {/* Insert before first step */}
             <InsertControl
               afterIndex={-1}
               label="Insert step before step 1"
@@ -324,7 +546,6 @@ export default function PlanReview() {
                   dispatch={dispatch}
                   activeEditor={activeEditor}
                 />
-                {/* Insert after each step */}
                 <InsertControl
                   key={`ins-${step.id}`}
                   afterIndex={idx}
@@ -338,20 +559,28 @@ export default function PlanReview() {
         )}
       </section>
 
-      {/* Decision buttons */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <button
-          disabled={isEmpty}
-          aria-disabled={isEmpty}
-          title={isEmpty ? "A plan needs at least one step." : undefined}
-          className="flex-1 py-2.5 px-6 rounded-lg bg-ziki-blue text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-ziki-blue focus:ring-offset-2 focus:ring-offset-ziki-bg motion-safe:transition-colors"
-        >
-          Approve
-        </button>
-        <button className="flex-1 py-2.5 px-6 rounded-lg border border-ziki-border text-ziki-text font-semibold text-sm hover:bg-ziki-surface focus:outline-none focus:ring-2 focus:ring-ziki-blue focus:ring-offset-2 focus:ring-offset-ziki-bg motion-safe:transition-colors">
-          Send back
-        </button>
-      </div>
+      {/* Decision buttons or comment box */}
+      {isSendBackOpen ? (
+        <SendBackBox dispatch={dispatch} />
+      ) : (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            disabled={isEmpty}
+            aria-disabled={isEmpty}
+            onClick={() => dispatch({ type: "APPROVE" })}
+            title={isEmpty ? "A plan needs at least one step." : undefined}
+            className="flex-1 py-2.5 px-6 rounded-lg bg-ziki-blue text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-ziki-blue focus:ring-offset-2 focus:ring-offset-ziki-bg motion-safe:transition-colors"
+          >
+            Approve
+          </button>
+          <button
+            onClick={() => dispatch({ type: "OPEN_SEND_BACK" })}
+            className="flex-1 py-2.5 px-6 rounded-lg border border-ziki-border text-ziki-text font-semibold text-sm hover:bg-ziki-surface focus:outline-none focus:ring-2 focus:ring-ziki-blue focus:ring-offset-2 focus:ring-offset-ziki-bg motion-safe:transition-colors"
+          >
+            Send back
+          </button>
+        </div>
+      )}
 
       {isEmpty && (
         <p role="alert" className="text-xs text-ziki-muted text-center">
